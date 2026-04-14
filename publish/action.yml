@@ -1,0 +1,30 @@
+name: 'Publish MoonBit Package'
+description: 'Publish a MoonBit package to the mooncakes.io registry'
+
+inputs:
+  token:
+    description: >
+      API token for the mooncakes.io registry. Store this as a repository
+      secret and pass it with `${{ secrets.MOONCAKES_TOKEN }}`.
+    required: true
+  package-path:
+    description: >
+      Path to the package directory that contains moon.pkg.json.
+      Defaults to the repository root.
+    required: false
+    default: '.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Authenticate with mooncakes.io
+      shell: bash
+      env:
+        MOONBIT_REGISTRY_TOKEN: ${{ inputs.token }}
+      run: |
+        moon login --token "$MOONBIT_REGISTRY_TOKEN"
+
+    - name: Publish package
+      shell: bash
+      working-directory: ${{ inputs.package-path }}
+      run: moon publish

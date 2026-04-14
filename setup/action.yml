@@ -1,0 +1,46 @@
+name: 'Setup MoonBit'
+description: 'Install and configure the MoonBit toolchain'
+
+inputs:
+  version:
+    description: >
+      MoonBit version to install. Accepts "latest" or a specific version tag
+      such as "v0.1.20250101". Defaults to "latest".
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install MoonBit (Linux / macOS)
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        MOONBIT_INSTALL_VERSION: ${{ inputs.version }}
+      run: |
+        if [ "$MOONBIT_INSTALL_VERSION" = "latest" ]; then
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+        else
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- "$MOONBIT_INSTALL_VERSION"
+        fi
+        echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+    - name: Install MoonBit (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        MOONBIT_INSTALL_VERSION: ${{ inputs.version }}
+      run: |
+        $version = $env:MOONBIT_INSTALL_VERSION
+        if ($version -eq 'latest') {
+          irm https://cli.moonbitlang.com/install/win.ps1 | iex
+        } else {
+          $env:MOONBIT_VERSION = $version
+          irm https://cli.moonbitlang.com/install/win.ps1 | iex
+        }
+        $moonBinPath = "$env:USERPROFILE\.moon\bin"
+        Add-Content -Path $env:GITHUB_PATH -Value $moonBinPath
+
+    - name: Verify installation
+      shell: bash
+      run: moon version
