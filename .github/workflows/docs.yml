@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and deploy docs
         id: doc
-        uses: cogna-dev/moonbit-actions/document@v1
+        uses: cogna-dev/moonbit-actions/document@v0
         with:
           deploy: 'true'
           title: moonbit-actions

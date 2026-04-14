@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup MoonBit
-        uses: cogna-dev/moonbit-actions/setup@v1
+        uses: cogna-dev/moonbit-actions/setup@v0
 
       - name: Check
         run: moon check
@@ -60,7 +60,7 @@ jobs:
 Pin to a specific version:
 
 ```yaml
-- uses: cogna-dev/moonbit-actions/setup@v1
+- uses: cogna-dev/moonbit-actions/setup@v0
   with:
     version: v0.1.20250101
 ```
@@ -98,10 +98,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup MoonBit
-        uses: cogna-dev/moonbit-actions/setup@v1
+        uses: cogna-dev/moonbit-actions/setup@v0
 
       - name: Publish to mooncakes.io
-        uses: cogna-dev/moonbit-actions/publish@v1
+        uses: cogna-dev/moonbit-actions/publish@v0
         with:
           token: ${{ secrets.MOONCAKES_TOKEN }}
 ```
@@ -109,7 +109,7 @@ jobs:
 For a mono-repo with multiple packages:
 
 ```yaml
-- uses: cogna-dev/moonbit-actions/publish@v1
+- uses: cogna-dev/moonbit-actions/publish@v0
   with:
     token: ${{ secrets.MOONCAKES_TOKEN }}
     package-path: packages/my-lib
@@ -174,7 +174,7 @@ jobs:
 
       - name: Build docs
         id: doc
-        uses: cogna-dev/moonbit-actions/document@v1
+        uses: cogna-dev/moonbit-actions/document@v0
         with:
           title: My MoonBit Library
           # deploy defaults to 'false' — only build
@@ -220,7 +220,7 @@ jobs:
 
       - name: Build and deploy to GitHub Pages
         id: doc
-        uses: cogna-dev/moonbit-actions/document@v1
+        uses: cogna-dev/moonbit-actions/document@v0
         with:
           deploy: 'true'
           title: My MoonBit Library
@@ -293,7 +293,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup MoonBit
-        uses: cogna-dev/moonbit-actions/setup@v1
+        uses: cogna-dev/moonbit-actions/setup@v0
 
       - name: Check / Format / Build / Test
         run: |
@@ -303,13 +303,13 @@ jobs:
           moon test
 
       - name: Publish to mooncakes.io
-        uses: cogna-dev/moonbit-actions/publish@v1
+        uses: cogna-dev/moonbit-actions/publish@v0
         with:
           token: ${{ secrets.MOONCAKES_TOKEN }}
 
       - name: Deploy docs to GitHub Pages
         id: doc
-        uses: cogna-dev/moonbit-actions/document@v1
+        uses: cogna-dev/moonbit-actions/document@v0
         with:
           deploy: 'true'
 ```
