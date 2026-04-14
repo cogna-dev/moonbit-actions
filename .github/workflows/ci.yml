@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Check / Format / Build / Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example/hello
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MoonBit
+        uses: cogna-dev/moonbit-actions/setup@v0
+
+      - name: Check
+        run: moon check
+
+      - name: Format
+        run: moon fmt --check
+
+      - name: Build
+        run: moon build
+
+      - name: Test
+        run: moon test
+
+      - name: Publish (trial — skipped if no token or version conflict)
+        continue-on-error: true
+        uses: cogna-dev/moonbit-actions/publish@v0
+        with:
+          token: ${{ secrets.MOONCAKES_TOKEN }}
+          package-path: example/hello
