@@ -1,0 +1,9 @@
+{
+  "name": "cogna-dev/hello",
+  "version": "0.1.0",
+  "readme": "README.md",
+  "repository": "https://github.com/cogna-dev/moonbit-actions",
+  "license": "MIT",
+  "keywords": ["hello-world", "example"],
+  "description": "Hello World example for moonbit-actions"
+}

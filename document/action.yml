@@ -1,7 +1,7 @@
 name: 'Document MoonBit'
 description: >
-  Build your README.md into a single inlined HTML page using Vite + Shadcn UI
-  and deploy it to GitHub Pages.
+  Build your README.md into a single inlined HTML page using Vite + Shadcn UI.
+  Optionally deploy to GitHub Pages when deploy is set to 'true'.
 
 inputs:
   readme-path:
@@ -12,10 +12,20 @@ inputs:
     description: 'Page title shown in the browser tab. Defaults to the repo name.'
     required: false
     default: ''
+  deploy:
+    description: >
+      Set to 'true' to upload the built site as a GitHub Pages artifact and
+      deploy it. The calling workflow must have `pages: write` and
+      `id-token: write` permissions.
+    required: false
+    default: 'false'
 
 outputs:
+  dist-path:
+    description: 'Absolute path to the built documentation directory (contains index.html).'
+    value: ${{ github.action_path }}/dist
   page-url:
-    description: 'URL of the deployed GitHub Pages site.'
+    description: 'URL of the deployed GitHub Pages site (only set when deploy is true).'
     value: ${{ steps.deployment.outputs.page_url }}
 
 runs:
@@ -40,10 +50,12 @@ runs:
       run: npm run build
 
     - name: Upload Pages artifact
+      if: inputs.deploy == 'true'
       uses: actions/upload-pages-artifact@v3
       with:
         path: ${{ github.action_path }}/dist
 
     - name: Deploy to GitHub Pages
+      if: inputs.deploy == 'true'
       id: deployment
       uses: actions/deploy-pages@v4
