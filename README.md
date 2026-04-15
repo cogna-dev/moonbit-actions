@@ -2,10 +2,7 @@
 
 GitHub Actions for MoonBit Software Development Life-Cycle
 
-[![CI](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml)
-[![Deploy Docs](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![MoonBit](https://img.shields.io/badge/language-MoonBit-orange)](https://www.moonbitlang.com/)
+<p>[![CI](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml) [![Deploy Docs](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![MoonBit](https://img.shields.io/badge/language-MoonBit-orange)](https://www.moonbitlang.com/)</p>
 
 A collection of reusable GitHub Actions for building, publishing, and documenting [MoonBit](https://www.moonbitlang.com/) projects — covering the full Software Development Life-Cycle from CI to release to live documentation.
 
@@ -123,9 +120,9 @@ Builds your `README.md` into a beautifully styled, single-file `index.html` usin
 
 Features:
 - 📄 Full GitHub Flavored Markdown (GFM) — tables, task lists, strikethrough, autolinks
-- 🎨 Syntax-highlighted code blocks (60+ languages via highlight.js)
+- 🎨 Syntax-highlighted code blocks (20+ languages via Shiki, processed at build time)
 - 🌙 Dark / light mode toggle (respects system preference by default)
-- 🔗 Auto-generated sidebar navigation from headings with scroll-spy
+- 🔗 Auto-generated right-side TOC from headings with scroll-spy (hidden on narrow screens)
 - 📦 Single self-contained `index.html` — deploy to any static host
 
 ### Prerequisites
@@ -232,7 +229,7 @@ jobs:
 
 A minimal MoonBit project is included under [`example/hello/`](example/hello/) to demonstrate the actions end-to-end.
 
-**`example/hello/main/main.mbt`**
+#### `example/hello/main/main.mbt`
 
 ```moonbit
 fn main {
@@ -240,7 +237,7 @@ fn main {
 }
 ```
 
-**`example/hello/moon.mod.json`**
+#### `example/hello/moon.mod.json`
 
 ```json
 {
@@ -250,7 +247,7 @@ fn main {
 }
 ```
 
-**`example/hello/main/moon.pkg.json`**
+#### `example/hello/main/moon.pkg.json`
 
 ```json
 {

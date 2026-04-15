@@ -47,6 +47,7 @@ runs:
       env:
         README_PATH: ${{ github.workspace }}/${{ inputs.readme-path }}
         VITE_PAGE_TITLE: ${{ inputs.title || github.event.repository.name }}
+        VITE_REPO_FULL_NAME: ${{ github.repository }}
       run: npm run build
 
     - name: Upload Pages artifact

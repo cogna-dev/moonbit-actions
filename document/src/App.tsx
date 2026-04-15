@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Moon, Sun, Menu, X } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
 import { cn } from '@/lib/utils'
@@ -13,35 +13,60 @@ interface Heading {
 interface AppProps {
   readmeContent: string
   pageTitle: string
+  repoFullName: string
 }
 
+// Extract headings from markdown, generating duplicate-aware IDs that match
+// rehype-slug's behaviour (powered by github-slugger under the hood).
 function extractHeadings(markdown: string): Heading[] {
   const lines = markdown.split('\n')
   const headings: Heading[] = []
+  const slugCounts: Record<string, number> = {}
+
   for (const line of lines) {
-    const match = line.match(/^(#{1,3})\s+(.+)/)
+    // Only ATX headings (# through ######) — setext and bold text are excluded.
+    const match = line.match(/^(#{1,6})\s+(.+)/)
     if (match) {
       const level = match[1].length
-      const text = match[2].replace(/[`*_[\]]/g, '').trim()
-      const id = text
+      // Strip inline markdown syntax to get plain text for display and ID.
+      const text = match[2]
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) → text
+        .replace(/[`*_[\]]/g, '')                 // backticks, emphasis
+        .trim()
+
+      const baseId = text
         .toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+
+      const count = slugCounts[baseId] ?? 0
+      const id = count === 0 ? baseId : `${baseId}-${count}`
+      slugCounts[baseId] = count + 1
+
       headings.push({ id, text, level })
     }
   }
   return headings
 }
 
-export default function App({ readmeContent, pageTitle }: AppProps) {
+const ASCII_BANNER = `
+  ███╗   ███╗ ██████╗  ██████╗ ███╗   ██╗██████╗ ██╗████████╗
+  ████╗ ████║██╔═══██╗██╔═══██╗████╗  ██║██╔══██╗██║╚══██╔══╝
+  ██╔████╔██║██║   ██║██║   ██║██╔██╗ ██║██████╔╝██║   ██║   
+  ██║╚██╔╝██║██║   ██║██║   ██║██║╚██╗██║██╔══██╗██║   ██║   
+  ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║   ██║   
+  ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝   ╚═╝   
+                                         — ACTIONS FOR MOONBIT 🌙`.trimStart()
+
+export default function App({ readmeContent, pageTitle, repoFullName }: AppProps) {
   const [dark, setDark] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches
     }
     return false
   })
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeId, setActiveId] = useState('')
 
   const headings = extractHeadings(readmeContent)
@@ -72,28 +97,33 @@ export default function App({ readmeContent, pageTitle }: AppProps) {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-    setSidebarOpen(false)
   }
+
+  // Split repoFullName into owner and repo for styled display.
+  const [owner, repo] = repoFullName.includes('/')
+    ? repoFullName.split('/', 2)
+    : ['', pageTitle]
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setSidebarOpen((v) => !v)}
-              aria-label="Toggle navigation"
-            >
-              {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </Button>
-            <span className="font-semibold text-sm truncate max-w-[200px] sm:max-w-none">
-              {pageTitle}
-            </span>
+          {/* Org · repo breadcrumb */}
+          <div className="flex items-center gap-1 min-w-0">
+            {owner && (
+              <>
+                <span className="text-sm text-muted-foreground font-medium truncate">
+                  {owner}
+                </span>
+                <span className="text-muted-foreground/50 mx-1 select-none font-light text-lg leading-none">
+                  ·
+                </span>
+              </>
+            )}
+            <span className="font-semibold text-sm truncate">{repo}</span>
           </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -105,56 +135,58 @@ export default function App({ readmeContent, pageTitle }: AppProps) {
         </div>
       </header>
 
+      {/* Hero banner */}
+      <div className="border-b border-border/40 bg-muted/30">
+        <div className="container mx-auto max-w-5xl px-4 py-8">
+          <pre
+            aria-hidden="true"
+            className="overflow-x-auto text-[0.55rem] leading-tight font-mono text-primary/70 select-none"
+          >
+            {ASCII_BANNER}
+          </pre>
+          {repoFullName && (
+            <p className="mt-3 text-xs text-muted-foreground font-mono">
+              {repoFullName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Content + right-side TOC */}
       <div className="container mx-auto max-w-5xl px-4 flex gap-8">
-        {/* Sidebar */}
-        {headings.length > 0 && (
-          <>
-            {/* Mobile overlay */}
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-black/40 md:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-
-            <aside
-              className={cn(
-                'fixed inset-y-0 left-0 z-50 w-64 bg-background border-r px-4 py-6 overflow-y-auto transition-transform duration-200',
-                'md:sticky md:top-14 md:z-auto md:w-56 md:border-0 md:bg-transparent md:flex-shrink-0',
-                'md:h-[calc(100vh-3.5rem)] md:translate-x-0',
-                sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-              )}
-            >
-              <nav className="space-y-1 pt-14 md:pt-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  On this page
-                </p>
-                {headings.map((h) => (
-                  <button
-                    key={h.id}
-                    onClick={() => scrollTo(h.id)}
-                    className={cn(
-                      'block w-full text-left py-1 text-sm transition-colors hover:text-foreground truncate',
-                      h.level === 1 && 'font-medium',
-                      h.level === 2 && 'pl-2',
-                      h.level === 3 && 'pl-4 text-xs',
-                      activeId === h.id
-                        ? 'text-primary font-medium'
-                        : 'text-muted-foreground',
-                    )}
-                  >
-                    {h.text}
-                  </button>
-                ))}
-              </nav>
-            </aside>
-          </>
-        )}
-
         {/* Main content */}
         <main className="flex-1 min-w-0 py-8">
           <MarkdownRenderer content={readmeContent} />
         </main>
+
+        {/* Right-side TOC — visible only on large screens */}
+        {headings.length > 0 && (
+          <aside className="hidden lg:block w-56 flex-shrink-0">
+            <nav className="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                On this page
+              </p>
+              {headings.map((h) => (
+                <button
+                  key={h.id}
+                  onClick={() => scrollTo(h.id)}
+                  className={cn(
+                    'block w-full text-left py-1 text-sm transition-colors hover:text-foreground truncate',
+                    h.level === 1 && 'font-medium',
+                    h.level === 2 && 'font-medium',
+                    h.level === 3 && 'pl-3',
+                    h.level >= 4 && 'pl-5 text-xs',
+                    activeId === h.id
+                      ? 'text-primary font-medium'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {h.text}
+                </button>
+              ))}
+            </nav>
+          </aside>
+        )}
       </div>
     </div>
   )
