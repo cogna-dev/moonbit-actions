@@ -26,6 +26,7 @@ runs:
         set -euo pipefail
         mkdir -p ~/.moon
         trap 'rm -f ~/.moon/credentials.json' EXIT
+        install -m 600 /dev/null ~/.moon/credentials.json
         printf '%s' "$MOONCAKES_TOKEN" > ~/.moon/credentials.json
         moon whoami
         moon publish
