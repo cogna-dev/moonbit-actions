@@ -16,7 +16,7 @@ A composite GitHub Action that publishes a MoonBit package to the [mooncakes.io]
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
 | `token` | **Yes** | — | API token for mooncakes.io. Store it as a repository secret. |
-| `package-path` | No | `.` | Path to the directory containing `moon.pkg.json`. |
+| `package-path` | No | `.` | Path to the directory containing `moon.pkg`. |
 | `dry-run` | No | `false` | If `true`, runs `moon publish --dry-run` instead of publishing. |
 
 ## What it does

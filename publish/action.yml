@@ -9,7 +9,7 @@ inputs:
     required: true
   package-path:
     description: >
-      Path to the package directory that contains moon.pkg.json.
+      Path to the package directory that contains moon.pkg.
       Defaults to the repository root.
     required: false
     default: '.'

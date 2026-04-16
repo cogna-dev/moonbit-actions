@@ -25,6 +25,11 @@ runs:
         fi
         echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
+    - name: Update MoonBit packages (Linux / macOS)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: moon update
+
     - name: Install MoonBit (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
@@ -40,6 +45,11 @@ runs:
         }
         $moonBinPath = "$env:USERPROFILE\.moon\bin"
         Add-Content -Path $env:GITHUB_PATH -Value $moonBinPath
+
+    - name: Update MoonBit packages (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: moon update
 
     - name: Verify installation
       shell: bash

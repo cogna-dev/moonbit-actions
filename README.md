@@ -20,7 +20,7 @@ A collection of reusable GitHub Actions for building, publishing, and documentin
 
 ## `setup`
 
-Installs the MoonBit toolchain (compiler, `moon` CLI, and standard library) and adds it to `PATH`. Works on **Linux**, **macOS**, and **Windows** runners.
+Installs the MoonBit toolchain (compiler, `moon` CLI, and standard library), runs `moon update`, and adds it to `PATH`. Works on **Linux**, **macOS**, and **Windows** runners.
 
 ### Inputs
 
@@ -80,7 +80,7 @@ Publishes a MoonBit package to the [mooncakes.io](https://mooncakes.io) registry
 | Name | Required | Default | Description |
 |------|----------|---------|-------------|
 | `token` | **Yes** | — | API token for mooncakes.io. Store as a repository secret. |
-| `package-path` | No | `.` | Path to the directory containing `moon.pkg.json`. |
+| `package-path` | No | `.` | Path to the directory containing `moon.pkg`. |
 | `dry-run` | No | `false` | If `true`, runs `moon publish --dry-run` instead of publishing. |
 
 ### Example
@@ -247,6 +247,7 @@ A minimal MoonBit project is included under [`example/hello/`](example/hello/) t
 #### `example/hello/main/main.mbt`
 
 ```moonbit
+///|
 fn main {
   println("Hello, World!")
 }
@@ -262,13 +263,15 @@ fn main {
 }
 ```
 
-#### `example/hello/main/moon.pkg.json`
+#### `example/hello/main/moon.pkg`
 
-```json
-{
-  "is-main": true,
-  "import": []
+```moonbit
+import {
 }
+
+options(
+  "is-main": true,
+)
 ```
 
 ---
