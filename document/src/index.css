@@ -50,23 +50,36 @@
   }
 }
 
-/* Syntax highlighting (highlight.js GitHub theme) */
-.hljs {
-  color: #24292e;
-  background: #f6f8fa;
+/* Shiki dual-theme syntax highlighting using CSS variables.
+   Light theme colors are the default; dark class flips to the dark theme. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light) !important;
+  background-color: var(--shiki-light-bg) !important;
+  font-style: var(--shiki-light-font-style) !important;
+  font-weight: var(--shiki-light-font-weight) !important;
+  text-decoration: var(--shiki-light-text-decoration) !important;
 }
-.dark .hljs {
-  color: #e1e4e8;
-  background: #161b22;
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
 }
-.hljs-comment, .hljs-punctuation { color: #6a737d; }
-.hljs-keyword, .hljs-selector-tag { color: #d73a49; }
-.dark .hljs-keyword, .dark .hljs-selector-tag { color: #f97583; }
-.hljs-string, .hljs-attr { color: #032f62; }
-.dark .hljs-string, .dark .hljs-attr { color: #9ecbff; }
-.hljs-title, .hljs-section { color: #6f42c1; }
-.dark .hljs-title, .dark .hljs-section { color: #b392f0; }
-.hljs-number, .hljs-literal { color: #005cc5; }
-.dark .hljs-number, .dark .hljs-literal { color: #79b8ff; }
-.hljs-variable, .hljs-name { color: #e36209; }
-.dark .hljs-variable, .dark .hljs-name { color: #ffab70; }
+
+/* Shiki wraps code in <pre class="shiki ..."><code>…</code></pre>.
+   Give the block the same look as the rest of the prose. */
+pre.shiki {
+  @apply my-4 overflow-x-auto rounded-lg border text-sm p-4;
+}
+
+/* Badge / inline images inside paragraphs should be inline so multiple
+   badges stay on the same line regardless of screen width. */
+p > img,
+p > a > img {
+  display: inline !important;
+  vertical-align: middle;
+}
