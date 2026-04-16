@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup MoonBit
-        uses: cogna-dev/moonbit-actions/setup@v0
+        uses: cogna-dev/moonbit-actions/setup@v0.1.2
 
       - name: Check
         run: moon check
@@ -37,7 +37,7 @@ jobs:
 
       - name: Publish (trial — skipped if no token or version conflict)
         continue-on-error: true
-        uses: cogna-dev/moonbit-actions/publish@v0
+        uses: cogna-dev/moonbit-actions/publish@v0.1.2
         with:
           token: ${{ secrets.MOONCAKES_TOKEN }}
           package-path: example/hello
