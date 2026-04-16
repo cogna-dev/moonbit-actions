@@ -11,25 +11,63 @@ interface Heading {
 }
 
 interface AppProps {
+  /**
+   * Map of page key → processed markdown content.
+   *  - Dev/SPA mode: contains ALL pages (hash routing lets the user navigate).
+   *  - Production static mode: contains exactly ONE entry (this page only).
+   */
   readmeMap: Record<string, string>
+  /** Full sorted list of all page keys. Same in every production HTML file. */
+  allPageKeys: string[]
+  /**
+   * The page key baked into this specific HTML file.
+   *  - Dev mode: "" (root, overridden by hash routing).
+   *  - Static mode: actual key, e.g. "setup" or "".
+   */
+  currentPageKey: string
   pageTitle: string
   repoFullName: string
 }
 
 // ---------------------------------------------------------------------------
-// Hash routing helpers.
-// The SPA uses the URL hash to encode the current README path:
-//   #/        → root README  (key "")
-//   #/src     → src/README.md  (key "src")
-//   #/a/b/c   → a/b/c/README.md  (key "a/b/c")
+// Build-mode detection.
+// SPA mode  → readmeMap contains ALL pages (dev server, hash routing).
+// Static mode → readmeMap contains exactly the current page (each prod HTML
+//               file has its own copy with relative-path navigation).
+// ---------------------------------------------------------------------------
+function isSPAMode(readmeMap: Record<string, string>, allPageKeys: string[]): boolean {
+  return Object.keys(readmeMap).length === allPageKeys.length
+}
+
+// ---------------------------------------------------------------------------
+// Navigation href helpers.
+// ---------------------------------------------------------------------------
+
+/** Hash URL for SPA routing (#/ → root, #/setup → setup page). */
+function spaHref(key: string): string {
+  return key ? `#/${key}` : '#/'
+}
+
+/**
+ * Relative HTML path from `fromKey`'s index.html to `toKey`'s index.html.
+ * e.g. ("", "setup")      → "setup/"
+ *      ("setup", "")      → "../"
+ *      ("setup", "doc")   → "../doc/"
+ *      ("a/b", "c/d")     → "../../c/d/"
+ */
+export function relHtmlPath(fromKey: string, toKey: string): string {
+  const depth = fromKey ? fromKey.split('/').length : 0
+  const up = depth > 0 ? '../'.repeat(depth) : './'
+  if (!toKey) return up
+  return up + toKey + '/'
+}
+
+// ---------------------------------------------------------------------------
+// Hash routing helpers (SPA mode only).
 // ---------------------------------------------------------------------------
 function hashToKey(hash: string): string {
   if (!hash || hash === '#' || hash === '#/') return ''
   return hash.replace(/^#\/?/, '').replace(/\/$/, '')
-}
-
-function keyToHash(key: string): string {
-  return key ? `#/${key}` : '#/'
 }
 
 // ---------------------------------------------------------------------------
@@ -41,14 +79,12 @@ function extractHeadings(markdown: string): Heading[] {
   const slugCounts: Record<string, number> = {}
 
   for (const line of lines) {
-    // Only ATX headings (# through ######) — setext and bold text are excluded.
     const match = line.match(/^(#{1,6})\s+(.+)/)
     if (match) {
       const level = match[1].length
-      // Strip inline markdown syntax to get plain text for display and ID.
       const text = match[2]
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) → text
-        .replace(/[`*_[\]]/g, '')                 // backticks, emphasis
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[`*_[\]]/g, '')
         .trim()
 
       const baseId = text
@@ -69,17 +105,14 @@ function extractHeadings(markdown: string): Heading[] {
 }
 
 // ---------------------------------------------------------------------------
-// Directory tree helpers.
+// Sidebar label / depth helpers.
 // ---------------------------------------------------------------------------
-
-/** Label shown in the sidebar for a given README key. */
 function keyLabel(key: string): string {
   if (!key) return 'README'
   const parts = key.split('/')
   return parts[parts.length - 1]
 }
 
-/** Depth of a key (0 = root). */
 function keyDepth(key: string): number {
   return key ? key.split('/').length : 0
 }
@@ -93,66 +126,70 @@ const ASCII_BANNER = `
   ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝   ╚═╝   
                                          — ACTIONS FOR MOONBIT 🌙`.trimStart()
 
-export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
-  const [dark, setDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-    return false
-  })
-
-  // Hash-based routing: derive the current README key from window.location.hash.
-  const [currentKey, setCurrentKey] = useState(() =>
-    hashToKey(window.location.hash),
+export default function App({
+  readmeMap,
+  allPageKeys,
+  currentPageKey,
+  pageTitle,
+  repoFullName,
+}: AppProps) {
+  const [dark, setDark] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false,
   )
 
-  const [activeId, setActiveId] = useState('')
+  const staticMode = !isSPAMode(readmeMap, allPageKeys)
 
-  // All sorted README keys (root first, then alphabetical).
-  const sortedKeys = useMemo(() => {
-    const keys = Object.keys(readmeMap)
-    keys.sort((a, b) => {
-      if (a === '') return -1
-      if (b === '') return 1
-      return a.localeCompare(b)
-    })
-    return keys
-  }, [readmeMap])
+  // In SPA mode, the visible key is driven by the URL hash (mutable).
+  // In static mode, it's fixed to the baked-in currentPageKey.
+  const [spaKey, setSpaKey] = useState(() =>
+    staticMode ? currentPageKey : hashToKey(window.location.hash),
+  )
+  const activeKey = staticMode ? currentPageKey : spaKey
 
-  const hasMultipleReadmes = sortedKeys.length > 1
+  const [activeHeadingId, setActiveHeadingId] = useState('')
 
-  // Resolve the content for the current route, falling back to root.
-  const currentContent = readmeMap[currentKey] ?? readmeMap[''] ?? ''
+  // Resolve displayed content.
+  const currentContent = staticMode
+    ? (readmeMap[currentPageKey] ?? Object.values(readmeMap)[0] ?? '')
+    : (readmeMap[spaKey] ?? readmeMap[''] ?? '')
+
   const headings = useMemo(() => extractHeadings(currentContent), [currentContent])
 
-  // Sync the in-app key with hash changes (browser back/forward).
+  const hasMultiplePages = allPageKeys.length > 1
+
+  // ---- SPA hash-change listener -----------------------------------------
   useEffect(() => {
-    const onHashChange = () => setCurrentKey(hashToKey(window.location.hash))
+    if (staticMode) return
+    const onHashChange = () => setSpaKey(hashToKey(window.location.hash))
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  }, [staticMode])
 
-  // If the current key is not in the map, redirect to root.
+  // ---- Redirect unknown hash keys to root (SPA mode only) ---------------
   useEffect(() => {
-    if (!(currentKey in readmeMap) && readmeMap[''] !== undefined) {
-      navigate('')
+    if (staticMode) return
+    if (!(spaKey in readmeMap) && '' in readmeMap) {
+      window.location.hash = spaHref('')
+      setSpaKey('')
     }
-  }, [currentKey, readmeMap])
+  }, [spaKey, readmeMap, staticMode])
 
+  // ---- Dark mode toggle --------------------------------------------------
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
   }, [dark])
 
+  // ---- Scroll spy --------------------------------------------------------
   const handleScroll = useCallback(() => {
     const scrollY = window.scrollY + 100
     let current = ''
     for (const h of headings) {
       const el = document.getElementById(h.id)
-      if (el && el.offsetTop <= scrollY) {
-        current = h.id
-      }
+      if (el && el.offsetTop <= scrollY) current = h.id
     }
-    setActiveId(current)
+    setActiveHeadingId(current)
   }, [headings])
 
   useEffect(() => {
@@ -160,40 +197,46 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
 
-  // Reset scroll and active heading whenever the page changes.
+  // Reset scroll when the SPA page changes.
   useEffect(() => {
-    window.scrollTo({ top: 0 })
-    setActiveId('')
-  }, [currentKey])
+    if (!staticMode) {
+      window.scrollTo({ top: 0 })
+      setActiveHeadingId('')
+    }
+  }, [spaKey, staticMode])
 
-  function navigate(key: string) {
-    window.location.hash = keyToHash(key)
-    setCurrentKey(key)
+  // ---- Navigation --------------------------------------------------------
+  /**
+   * Compute the href for a given target page key.
+   * Static mode → relative HTML path (proper URL, SEO-friendly).
+   * SPA mode    → hash URL (#/key).
+   */
+  function pageHref(targetKey: string): string {
+    if (staticMode) return relHtmlPath(currentPageKey, targetKey)
+    return spaHref(targetKey)
   }
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Split repoFullName into owner and repo for styled display.
+  // ---- Repo header -------------------------------------------------------
   const [owner, repo] = repoFullName.includes('/')
     ? repoFullName.split('/', 2)
     : ['', pageTitle]
 
-  const readmeKeySet = useMemo(() => new Set(sortedKeys), [sortedKeys])
+  const readmeKeySet = useMemo(() => new Set(allPageKeys), [allPageKeys])
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          {/* Org · repo breadcrumb — clicking root README resets navigation */}
-          <button
+          {/* Org · repo breadcrumb — links to root page */}
+          <a
+            href={pageHref('')}
             className="flex items-center gap-1 min-w-0 hover:opacity-80 transition-opacity"
-            onClick={() => navigate('')}
           >
             {owner && (
               <>
@@ -206,7 +249,7 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
               </>
             )}
             <span className="font-semibold text-sm truncate">{repo}</span>
-          </button>
+          </a>
 
           <Button
             variant="ghost"
@@ -239,8 +282,8 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
       {/* Three-column layout: left file tree | content | right TOC */}
       <div className="container mx-auto max-w-7xl px-4 flex gap-0">
 
-        {/* Left sidebar: directory / file tree (only when > 1 README) */}
-        {hasMultipleReadmes && (
+        {/* Left sidebar: directory / file tree (only when > 1 page) */}
+        {hasMultiplePages && (
           <aside className="hidden lg:block w-52 flex-shrink-0 border-r border-border/40">
             <nav
               aria-label="Documentation pages"
@@ -249,17 +292,17 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 pl-2">
                 Pages
               </p>
-              {sortedKeys.map((key) => {
+              {allPageKeys.map((key) => {
                 const depth = keyDepth(key)
                 const label = keyLabel(key)
-                const isActive = key === currentKey
+                const isActive = key === activeKey
                 return (
-                  <button
+                  <a
                     key={key}
-                    onClick={() => navigate(key)}
+                    href={pageHref(key)}
                     style={depth > 0 ? { paddingLeft: `${Math.min(depth * 3 + 2, 10) * 0.25}rem` } : undefined}
                     className={cn(
-                      'flex items-center gap-1.5 w-full text-left py-1 px-2 rounded text-sm transition-colors hover:bg-accent hover:text-accent-foreground truncate',
+                      'flex items-center gap-1.5 w-full py-1 px-2 rounded text-sm transition-colors hover:bg-accent hover:text-accent-foreground truncate no-underline',
                       isActive
                         ? 'bg-accent text-accent-foreground font-medium'
                         : 'text-muted-foreground',
@@ -270,7 +313,7 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
                     )}
                     <FileText className="h-3 w-3 flex-shrink-0 opacity-60" />
                     <span className="truncate">{label}</span>
-                  </button>
+                  </a>
                 )
               })}
             </nav>
@@ -278,22 +321,22 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
         )}
 
         {/* Main content */}
-        <main className={cn('flex-1 min-w-0 py-8', hasMultipleReadmes ? 'px-6 lg:px-8' : '')}>
-          {/* Breadcrumb path for sub-README pages */}
-          {currentKey && (
+        <main className={cn('flex-1 min-w-0 py-8', hasMultiplePages ? 'px-6 lg:px-8' : '')}>
+          {/* Sub-page breadcrumb */}
+          {activeKey && (
             <p className="text-xs text-muted-foreground font-mono mb-4">
-              {currentKey}/README.md
+              {activeKey}/README.md
             </p>
           )}
           <MarkdownRenderer
             content={currentContent}
-            currentPath={currentKey}
+            currentPath={activeKey}
             readmeKeys={readmeKeySet}
-            onNavigate={navigate}
+            isStaticMode={staticMode}
           />
         </main>
 
-        {/* Right-side TOC — visible only on large screens */}
+        {/* Right-side TOC */}
         {headings.length > 0 && (
           <aside className="hidden lg:block w-52 flex-shrink-0">
             <nav
@@ -313,7 +356,7 @@ export default function App({ readmeMap, pageTitle, repoFullName }: AppProps) {
                     h.level === 2 && 'font-medium',
                     h.level === 3 && 'pl-3',
                     h.level >= 4 && 'pl-5 text-xs',
-                    activeId === h.id
+                    activeHeadingId === h.id
                       ? 'text-primary font-medium'
                       : 'text-muted-foreground',
                   )}

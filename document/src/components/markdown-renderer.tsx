@@ -4,6 +4,7 @@ import rehypeSlug from 'rehype-slug'
 import rehypeRaw from 'rehype-raw'
 import type { Components } from 'react-markdown'
 import { cn } from '@/lib/utils'
+import { relHtmlPath } from '@/App'
 
 interface MarkdownRendererProps {
   content: string
@@ -12,35 +13,33 @@ interface MarkdownRendererProps {
   currentPath?: string
   /** Set of all available README directory keys, used for link interception. */
   readmeKeys?: Set<string>
-  /** Called when the user navigates to another README page. */
-  onNavigate?: (key: string) => void
+  /**
+   * When true (production static build) relative links to README pages are
+   * rewritten to relative HTML paths (e.g. "../setup/").
+   * When false (dev / SPA mode) they are rewritten to hash routes (#/setup).
+   */
+  isStaticMode?: boolean
 }
 
 // ---------------------------------------------------------------------------
 // Resolve a relative href against a base directory path.
-// Both are slash-separated strings (no leading slash).
-// Removes a trailing "README.md" / "readme.md" segment automatically.
-// Returns the resolved key, or null if the href escapes above root (../..).
 // ---------------------------------------------------------------------------
 function resolveHref(currentPath: string, href: string): string | null {
-  // Split off any fragment (#anchor)
   const hashIdx = href.indexOf('#')
   const hrefPath = hashIdx >= 0 ? href.slice(0, hashIdx) : href
 
-  // Start from the current directory
   const parts = currentPath ? currentPath.split('/') : []
 
   for (const seg of hrefPath.split('/')) {
     if (seg === '' || seg === '.') continue
     if (seg === '..') {
-      if (parts.length === 0) return null // escaped above root
+      if (parts.length === 0) return null
       parts.pop()
     } else {
       parts.push(seg)
     }
   }
 
-  // Remove trailing README.md (case-insensitive)
   if (parts.length > 0 && parts[parts.length - 1].toLowerCase() === 'readme.md') {
     parts.pop()
   }
@@ -53,10 +52,8 @@ export function MarkdownRenderer({
   className,
   currentPath = '',
   readmeKeys = new Set(),
-  onNavigate,
+  isStaticMode = false,
 }: MarkdownRendererProps) {
-  // Build components inside the function so the link handler can close over
-  // the routing props (currentPath, readmeKeys, onNavigate).
   const components: Components = {
     h1: ({ className, ...props }) => (
       <h1
@@ -97,7 +94,6 @@ export function MarkdownRenderer({
     a: ({ className, href, children, ...props }) => {
       const baseClass = 'font-medium text-primary underline underline-offset-4 hover:opacity-80'
 
-      // External links — open in new tab, no interception.
       if (
         !href ||
         href.startsWith('http') ||
@@ -117,7 +113,6 @@ export function MarkdownRenderer({
         )
       }
 
-      // Pure same-page anchor — leave untouched.
       if (href.startsWith('#')) {
         return (
           <a href={href} className={cn(baseClass, className)} {...props}>
@@ -126,25 +121,19 @@ export function MarkdownRenderer({
         )
       }
 
-      // Relative link — check if it targets a README we know about.
+      // Relative link — check if it targets a known README page.
       const resolvedKey = resolveHref(currentPath, href)
       if (resolvedKey !== null && readmeKeys.has(resolvedKey)) {
+        const pageHref = isStaticMode
+          ? relHtmlPath(currentPath, resolvedKey)
+          : (resolvedKey ? `#/${resolvedKey}` : '#/')
         return (
-          <a
-            href={`#/${resolvedKey}`}
-            className={cn(baseClass, className)}
-            onClick={(e) => {
-              e.preventDefault()
-              onNavigate?.(resolvedKey)
-            }}
-            {...props}
-          >
+          <a href={pageHref} className={cn(baseClass, className)} {...props}>
             {children}
           </a>
         )
       }
 
-      // Any other relative link — pass through unchanged.
       return (
         <a href={href} className={cn(baseClass, className)} {...props}>
           {children}

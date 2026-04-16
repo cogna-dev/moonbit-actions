@@ -9,6 +9,8 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App
       readmeMap={__README_MAP__}
+      allPageKeys={__ALL_PAGE_KEYS__}
+      currentPageKey={__CURRENT_PAGE_KEY__}
       pageTitle={__PAGE_TITLE__}
       repoFullName={__REPO_FULL_NAME__}
     />
