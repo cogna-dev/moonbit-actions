@@ -28,7 +28,8 @@ A composite GitHub Action that installs and configures the [MoonBit](https://www
 
 1. **Linux / macOS** — downloads and runs the official shell installer (`https://cli.moonbitlang.com/install/unix.sh`) then adds `~/.moon/bin` to `GITHUB_PATH`.
 2. **Windows** — downloads and runs the PowerShell installer (`https://cli.moonbitlang.com/install/win.ps1`) then adds `%USERPROFILE%\.moon\bin` to `GITHUB_PATH`.
-3. Runs `moon version` to verify the installation.
+3. Runs `moon update` to refresh MoonBit packages.
+4. Runs `moon version` to verify the installation.
 
 After this step runs, the `moon` CLI is available in all subsequent steps.
 

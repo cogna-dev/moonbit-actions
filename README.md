@@ -20,7 +20,7 @@ A collection of reusable GitHub Actions for building, publishing, and documentin
 
 ## `setup`
 
-Installs the MoonBit toolchain (compiler, `moon` CLI, and standard library) and adds it to `PATH`. Works on **Linux**, **macOS**, and **Windows** runners.
+Installs the MoonBit toolchain (compiler, `moon` CLI, and standard library), runs `moon update`, and adds it to `PATH`. Works on **Linux**, **macOS**, and **Windows** runners.
 
 ### Inputs
 
