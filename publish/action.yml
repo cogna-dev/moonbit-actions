@@ -29,6 +29,7 @@ runs:
         trap 'rm -f ~/.moon/credentials.json "$tmp_credentials"' EXIT
         chmod 600 "$tmp_credentials"
         printf '%s' "$MOONCAKES_TOKEN" | base64 -d > "$tmp_credentials"
+        test -s "$tmp_credentials"
         mv -f "$tmp_credentials" ~/.moon/credentials.json
         moon whoami
         moon publish
