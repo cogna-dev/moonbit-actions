@@ -17,14 +17,15 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Authenticate with mooncakes.io
-      shell: bash
-      env:
-        MOONBIT_REGISTRY_TOKEN: ${{ inputs.token }}
-      run: |
-        moon login --token "$MOONBIT_REGISTRY_TOKEN"
-
-    - name: Publish package
+    - name: Save credentials and publish package
       shell: bash
       working-directory: ${{ inputs.package-path }}
-      run: moon publish
+      env:
+        MOONCAKES_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        mkdir -p ~/.moon
+        trap 'rm -f ~/.moon/credentials.json' EXIT
+        printf '%s' "$MOONCAKES_TOKEN" > ~/.moon/credentials.json
+        moon whoami
+        moon publish
