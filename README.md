@@ -72,6 +72,7 @@ Pin to a specific version:
 Publishes a MoonBit package to the [mooncakes.io](https://mooncakes.io) registry.
 
 > **Prerequisite:** The MoonBit toolchain must be installed. Add the [`setup`](#setup) action in an earlier step.
+> The action expects `token: ${{ secrets.MOONCAKES_TOKEN }}` where the secret is a base64-encoded credentials payload; it decodes and writes `~/.moon/credentials.json` before `moon whoami` and `moon publish`.
 
 ### Inputs
 
