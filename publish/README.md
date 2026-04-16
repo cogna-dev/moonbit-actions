@@ -17,6 +17,7 @@ A composite GitHub Action that publishes a MoonBit package to the [mooncakes.io]
 |-------|----------|---------|-------------|
 | `token` | **Yes** | — | API token for mooncakes.io. Store it as a repository secret. |
 | `package-path` | No | `.` | Path to the directory containing `moon.pkg.json`. |
+| `dry-run` | No | `false` | If `true`, runs `moon publish --dry-run` instead of publishing. |
 
 ## What it does
 
@@ -73,6 +74,15 @@ the version already exists, wrap the step with `continue-on-error: true`:
   continue-on-error: true
   with:
     token: ${{ secrets.MOONCAKES_TOKEN }}
+```
+
+### Validate publish without releasing
+
+```yaml
+- uses: cogna-dev/moonbit-actions/publish@v0
+  with:
+    token: ${{ secrets.MOONCAKES_TOKEN }}
+    dry-run: 'true'
 ```
 
 ## Permissions

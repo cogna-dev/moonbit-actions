@@ -80,7 +80,8 @@ Publishes a MoonBit package to the [mooncakes.io](https://mooncakes.io) registry
 | Name | Required | Default | Description |
 |------|----------|---------|-------------|
 | `token` | **Yes** | — | API token for mooncakes.io. Store as a repository secret. |
-| `package-path` | No | `.` | Path to the directory containing `moon.mod.json`. |
+| `package-path` | No | `.` | Path to the directory containing `moon.pkg.json`. |
+| `dry-run` | No | `false` | If `true`, runs `moon publish --dry-run` instead of publishing. |
 
 ### Example
 
@@ -115,6 +116,15 @@ For a mono-repo with multiple packages:
   with:
     token: ${{ secrets.MOONCAKES_TOKEN }}
     package-path: packages/my-lib
+```
+
+For validation without releasing:
+
+```yaml
+- uses: cogna-dev/moonbit-actions/publish@v0
+  with:
+    token: ${{ secrets.MOONCAKES_TOKEN }}
+    dry-run: 'true'
 ```
 
 ---
