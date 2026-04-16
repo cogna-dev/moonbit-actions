@@ -2,7 +2,11 @@
 
 GitHub Actions for MoonBit Software Development Life-Cycle
 
-<p>[![CI](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml) [![Deploy Docs](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![MoonBit](https://img.shields.io/badge/language-MoonBit-orange)](https://www.moonbitlang.com/)</p>
+<div>
+  
+[![CI](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/ci.yml) [![Deploy Docs](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml/badge.svg)](https://github.com/cogna-dev/moonbit-actions/actions/workflows/docs.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![MoonBit](https://img.shields.io/badge/language-MoonBit-orange)](https://www.moonbitlang.com/)
+
+</div>
 
 A collection of reusable GitHub Actions for building, publishing, and documenting [MoonBit](https://www.moonbitlang.com/) projects — covering the full Software Development Life-Cycle from CI to release to live documentation.
 
