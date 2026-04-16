@@ -8,7 +8,7 @@ Thanks for your interest in contributing! This guide focuses on developing the *
 moonbit-actions/
 ├── document/          ← Vite + React app (this guide's focus)
 │   ├── src/           ← React source (App.tsx, components/, …)
-│   ├── vite.config.ts ← Build config + Shiki pre-processing
+│   ├── vite.config.ts ← Build config + Shiki pre-processing + README scanning
 │   ├── package.json
 │   └── action.yml     ← GitHub Actions composite action
 ├── setup/             ← Composite action (action.yml only)
@@ -35,26 +35,36 @@ npm install
 
 ### 2 — Start the Vite dev server
 
-The dev server reads the markdown file to render from the `README_PATH` environment variable (falls back to `../../README.md` relative to the `document/` directory, which resolves to the repo root `README.md`).
+The dev server scans the directory tree set by the `REPO_ROOT` environment variable (falls back to `../../` relative to `document/`, which resolves to the monorepo root).
 
 ```bash
-# Use the repo's own README (default)
+# Scan the repo root (default — picks up all README.md files)
 npm run dev
 
-# Use a custom README
-README_PATH=/path/to/your/README.md npm run dev
+# Scan a specific directory
+REPO_ROOT=/path/to/your/project npm run dev
 ```
 
 Open <http://localhost:5173> in your browser. The page hot-reloads whenever you edit source files under `src/`.
 
-> **Note:** `README_PATH` changes require a full Vite restart because the file is read once at config-load time and embedded as a compile-time constant via `vite.config.ts`.
+> **Note:** `REPO_ROOT` changes require a full Vite restart because all README files are read at config-load time and embedded as compile-time constants.
+
+### Single-file (legacy) mode
+
+To render only one README file instead of the whole tree, use the `README_PATH` variable:
+
+```bash
+README_PATH=/path/to/README.md npm run dev
+```
+
+When `README_PATH` is set, directory scanning is skipped and only that file is rendered.
 
 ### 3 — Simulating the full action environment
 
 The action also injects `VITE_PAGE_TITLE` and `VITE_REPO_FULL_NAME` at build time:
 
 ```bash
-README_PATH=/path/to/README.md \
+REPO_ROOT=/path/to/project \
 VITE_PAGE_TITLE="My Library" \
 VITE_REPO_FULL_NAME="my-org/my-repo" \
 npm run dev
@@ -63,11 +73,11 @@ npm run dev
 ### 4 — Production build
 
 ```bash
-# Default: resolves README from ../../README.md (repo root)
+# Scan repo root (default)
 npm run build
 
-# Explicit path
-README_PATH=/path/to/README.md npm run build
+# Explicit root
+REPO_ROOT=/path/to/project npm run build
 ```
 
 The output is a single self-contained `dist/index.html` with all JS/CSS inlined.
@@ -83,16 +93,21 @@ Opens a local server pointing at `dist/`. Useful for verifying the final output 
 ## How the build pipeline works
 
 ```
-README.md
+Repository directory tree
   │
   ▼ (vite.config.ts, build time)
-Shiki highlights fenced code blocks → raw HTML strings with CSS-variable colours
+Walk REPO_ROOT → find all README.md files
+  │
+  ▼ (Shiki, per file)
+Highlight fenced code blocks → HTML with CSS-variable colours
   │
   ▼ (vite define)
-__README_CONTENT__ / __PAGE_TITLE__ / __REPO_FULL_NAME__ embedded as JS constants
+__README_MAP__ embedded as a JS constant (Record<dirKey, content>)
   │
-  ▼ (React + rehype-slug + rehype-raw)
-Markdown rendered to DOM — Shiki <pre> blocks passed through as raw HTML
+  ▼ (React + hash routing)
+#/ → root README, #/src → src/README.md, etc.
+Relative links in markdown automatically rewritten to hash routes
+Left sidebar shows the directory tree; right sidebar shows per-page TOC
   │
   ▼ (vite-plugin-singlefile)
 All JS + CSS inlined → dist/index.html (single file, no external requests)
@@ -102,10 +117,24 @@ Key files:
 
 | File | Role |
 |------|------|
-| `vite.config.ts` | Reads README, runs Shiki at build time, injects constants |
-| `src/App.tsx` | Layout shell — header, ASCII hero, content area, right-side TOC |
-| `src/components/markdown-renderer.tsx` | Maps markdown AST nodes to styled React components |
+| `vite.config.ts` | Scans README files, runs Shiki, injects `__README_MAP__` |
+| `src/App.tsx` | Layout shell — header, hero, left file tree, content, right TOC; hash routing |
+| `src/components/markdown-renderer.tsx` | Renders markdown; intercepts relative README links for in-app navigation |
 | `src/index.css` | Tailwind setup + Shiki dual-theme CSS variable rules |
+
+## Multi-directory support
+
+`vite.config.ts` walks `REPO_ROOT` recursively and collects every `README.md` it finds (hidden directories and `node_modules` are skipped). Each file is keyed by its parent directory path relative to `REPO_ROOT`:
+
+| File | Key | Hash route |
+|------|-----|-----------|
+| `README.md` | `""` | `#/` |
+| `src/README.md` | `"src"` | `#/src` |
+| `src/utils/README.md` | `"src/utils"` | `#/src/utils` |
+
+Relative links in each README are resolved against the file's own directory and rewritten to the corresponding hash route automatically. For example, a link `./src/README.md` in the root README becomes `#/src`.
+
+When there is only one README (or when `README_PATH` single-file mode is used), the left sidebar is hidden and the layout stays exactly as before.
 
 ## Syntax highlighting (Shiki)
 

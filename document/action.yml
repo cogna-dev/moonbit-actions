@@ -1,13 +1,24 @@
 name: 'Document MoonBit'
 description: >
-  Build your README.md into a single inlined HTML page using Vite + Shadcn UI.
+  Scan all README.md files in the repository and build them into a single
+  self-contained HTML documentation site using Vite + React.
   Optionally deploy to GitHub Pages when deploy is set to 'true'.
 
 inputs:
-  readme-path:
-    description: 'Path to the README.md file, relative to the repository root.'
+  repo-root:
+    description: >
+      Root directory to scan for README.md files, relative to the repository
+      root. All README.md files found under this directory are included and
+      their folder hierarchy is preserved. Defaults to the repository root.
     required: false
-    default: 'README.md'
+    default: '.'
+  readme-path:
+    description: >
+      Deprecated — use repo-root instead.
+      Path to a single README.md file, relative to the repository root.
+      When set, only that one file is rendered (single-page mode).
+    required: false
+    default: ''
   title:
     description: 'Page title shown in the browser tab. Defaults to the repo name.'
     required: false
@@ -45,7 +56,10 @@ runs:
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
-        README_PATH: ${{ github.workspace }}/${{ inputs.readme-path }}
+        # Multi-README mode: scan everything under repo-root (default).
+        REPO_ROOT: ${{ github.workspace }}/${{ inputs.repo-root }}
+        # Legacy single-file mode: set README_PATH when readme-path is given.
+        README_PATH: ${{ inputs.readme-path != '' && format('{0}/{1}', github.workspace, inputs.readme-path) || '' }}
         VITE_PAGE_TITLE: ${{ inputs.title || github.event.repository.name }}
         VITE_REPO_FULL_NAME: ${{ github.repository }}
       run: npm run build
