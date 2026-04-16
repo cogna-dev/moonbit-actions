@@ -76,7 +76,7 @@ Publishes a MoonBit package to the [mooncakes.io](https://mooncakes.io) registry
 | Name | Required | Default | Description |
 |------|----------|---------|-------------|
 | `token` | **Yes** | — | API token for mooncakes.io. Store as a repository secret. |
-| `package-path` | No | `.` | Path to the directory containing `moon.mod.json`. |
+| `package-path` | No | `.` | Path to the directory containing `moon.pkg.json`. |
 | `dry-run` | No | `false` | If `true`, runs `moon publish --dry-run` instead of publishing. |
 
 ### Example

@@ -76,7 +76,7 @@ the version already exists, wrap the step with `continue-on-error: true`:
     token: ${{ secrets.MOONCAKES_TOKEN }}
 ```
 
-### Validate publish output without releasing
+### Validate publish without releasing
 
 ```yaml
 - uses: cogna-dev/moonbit-actions/publish@v0
