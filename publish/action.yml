@@ -5,7 +5,7 @@ inputs:
   token:
     description: >
       API token for the mooncakes.io registry. Store this as a repository
-      secret and pass it with `${{ secrets.MOONCAKES_TOKEN }}`.
+      secret and pass it as `secrets.MOONCAKES_TOKEN`.
     required: true
   package-path:
     description: >
