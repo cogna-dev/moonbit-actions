@@ -13,6 +13,11 @@ inputs:
       Defaults to the repository root.
     required: false
     default: '.'
+  dry-run:
+    description: >
+      If true, runs `moon publish --dry-run` instead of `moon publish`.
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -22,6 +27,7 @@ runs:
       working-directory: ${{ inputs.package-path }}
       env:
         MOONCAKES_TOKEN: ${{ inputs.token }}
+        PUBLISH_DRY_RUN: ${{ inputs.dry-run }}
       run: |
         set -euo pipefail
         mkdir -p ~/.moon
@@ -32,4 +38,15 @@ runs:
         test -s "$tmp_credentials" || { echo "Decoded credentials file is empty" >&2; exit 1; }
         mv -f "$tmp_credentials" ~/.moon/credentials.json
         moon whoami
-        moon publish
+        case "${PUBLISH_DRY_RUN,,}" in
+          true|1|yes)
+            moon publish --dry-run
+            ;;
+          false|0|no|'')
+            moon publish
+            ;;
+          *)
+            echo "Invalid dry-run value: '$PUBLISH_DRY_RUN'. Use true/false." >&2
+            exit 1
+            ;;
+        esac
