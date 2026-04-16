@@ -30,5 +30,6 @@ runs:
         chmod 600 "$tmp_credentials"
         printf '%s' "$MOONCAKES_TOKEN" > "$tmp_credentials"
         mv -f "$tmp_credentials" ~/.moon/credentials.json
+        chmod 600 ~/.moon/credentials.json
         moon whoami
         moon publish
