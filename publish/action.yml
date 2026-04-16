@@ -28,7 +28,7 @@ runs:
         tmp_credentials="$(mktemp -p ~/.moon credentials.json.XXXXXX)"
         trap 'rm -f ~/.moon/credentials.json "$tmp_credentials"' EXIT
         chmod 600 "$tmp_credentials"
-        printf '%s' "$MOONCAKES_TOKEN" | base64 -d > "$tmp_credentials" || { echo "Failed to decode MOONCAKES_TOKEN" >&2; exit 1; }
+        printf '%s' "$MOONCAKES_TOKEN" | base64 -d > "$tmp_credentials" || { echo "Failed to decode MOONCAKES_TOKEN (expected base64-encoded credentials)" >&2; exit 1; }
         test -s "$tmp_credentials" || { echo "Decoded credentials file is empty" >&2; exit 1; }
         mv -f "$tmp_credentials" ~/.moon/credentials.json
         moon whoami
