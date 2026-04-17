@@ -1,0 +1,35 @@
+name: 'Build MoonBit Package'
+description: 'Install MoonBit and build a package with moon build'
+
+inputs:
+  version:
+    description: >
+      MoonBit version to install. Accepts "latest" or a specific version tag
+      such as "v0.1.20250101". Defaults to "latest".
+    required: false
+    default: 'latest'
+  package-path:
+    description: >
+      Path to the package directory to build. Defaults to repository root.
+    required: false
+    default: '.'
+  target:
+    description: >
+      Build target passed to moon build --target. Defaults to "native".
+    required: false
+    default: 'native'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup MoonBit
+      uses: cogna-dev/moonbit-actions/setup@v0
+      with:
+        version: ${{ inputs.version }}
+
+    - name: Build package
+      shell: bash
+      working-directory: ${{ inputs.package-path }}
+      env:
+        MOON_BUILD_TARGET: ${{ inputs.target }}
+      run: moon build --target "$MOON_BUILD_TARGET"

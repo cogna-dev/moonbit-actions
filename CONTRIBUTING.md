@@ -12,6 +12,7 @@ moonbit-actions/
 │   ├── package.json
 │   └── action.yml     ← GitHub Actions composite action
 ├── setup/             ← Composite action (action.yml only)
+├── build/             ← Composite action (action.yml only)
 ├── publish/           ← Composite action (action.yml only)
 ├── example/           ← Minimal MoonBit hello-world project
 └── README.md

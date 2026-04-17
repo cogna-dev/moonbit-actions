@@ -13,6 +13,7 @@ A collection of reusable GitHub Actions for building, publishing, and documentin
 | Action | Description |
 |--------|-------------|
 | [`setup`](#setup) | Install the MoonBit toolchain on any runner OS |
+| [`build`](#build) | Build a MoonBit package (including `--target native`) |
 | [`publish`](#publish) | Publish a package to [mooncakes.io](https://mooncakes.io) |
 | [`document`](#document) | Build your README into a self-contained single-page site |
 
@@ -64,6 +65,62 @@ Pin to a specific version:
 - uses: cogna-dev/moonbit-actions/setup@v0
   with:
     version: v0.1.20250101
+```
+
+---
+
+## `build`
+
+Installs MoonBit and runs `moon build` for the target package directory.
+
+### Inputs
+
+| Name | Required | Default | Description |
+|------|----------|---------|-------------|
+| `version` | No | `latest` | MoonBit version to install, e.g. `v0.1.20250101`. |
+| `package-path` | No | `.` | Path to the package directory to build. |
+| `target` | No | `native` | Build target passed to `moon build --target`. |
+
+### Example — native matrix (OS + arch)
+
+```yaml
+# .github/workflows/ci-native.yml
+name: Native Build Matrix
+
+on: [push, pull_request]
+
+jobs:
+  build-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            arch: x86_64
+            runner: ubuntu-24.04
+          - os: linux
+            arch: aarch64
+            runner: ubuntu-24.04-arm
+          - os: darwin
+            arch: x86_64
+            runner: macos-13
+          - os: darwin
+            arch: aarch64
+            runner: macos-14
+          - os: windows
+            arch: x86_64
+            runner: windows-2022
+          - os: windows
+            arch: aarch64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build native (${{ matrix.os }}/${{ matrix.arch }})
+        uses: cogna-dev/moonbit-actions/build@v0
+        with:
+          package-path: example/hello
+          target: native
 ```
 
 ---
